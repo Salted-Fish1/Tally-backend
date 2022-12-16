@@ -1,13 +1,11 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   UseGuards,
   Request,
+  Get,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Prisma } from '@prisma/client';
@@ -30,6 +28,15 @@ export class UsersController {
     return result;
   }
 
+  @Post('signin')
+  async signin(
+    @Body() { username, password }: { username: string; password: string },
+  ) {
+    const result = await this.usersService.signin(username, password);
+
+    return result;
+  }
+
   @UseGuards(RtGuard)
   @Post('refresh')
   async refreshTokens(
@@ -40,6 +47,19 @@ export class UsersController {
       user.refreshToken,
     );
     return result;
+  }
+
+  @UseGuards(AtGuard)
+  @Post('logout')
+  async logout(@Body() { username }) {
+    return await this.usersService.logout(username);
+  }
+
+  @UseGuards(AtGuard)
+  @Get('getInfo')
+  async getInfo(@Request() { user }: { user: resolvedToken }) {
+    const info = await this.usersService.getInfo(user.name);
+    return info;
   }
 
   @UseGuards(AtGuard)
