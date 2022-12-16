@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+enum Role {
+    USER // 普通用户
+    ADMIN // 管理员
+}
+
+enum payType {
+    expense // 支出
+    income // 收入
+}
+
+model User {
+    id Int @id @default(autoincrement())
+
+    username String @unique
+    password String
+
+    hashedRt String?
+
+    role Role @default(USER)
+
+    signature String?
+    avatar    String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    Bill Bill[]
+}
+
+model Bill {
+    id        Int      @id @default(autoincrement())
+    amount    Float
+    createdAt DateTime @db.Date()
+    // createdAt DateTime @default(now()) @db.Date()
+    remark    String?
+
+    type   Type @relation(fields: [typeId], references: [id])
+    typeId Int
+
+    user   User @relation(fields: [userId], references: [id])
+    userId Int
+}
+
+model Type {
+    id       Int     @id @default(autoincrement())
+    typename String
+    type     payType
+    Bill     Bill[]
+}
