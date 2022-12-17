@@ -6,6 +6,9 @@ import {
   Request,
   Get,
   Req,
+  Patch,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Prisma } from '@prisma/client';
@@ -13,6 +16,7 @@ import { AtGuard } from '../auth/guards/at.guard';
 import { RtGuard } from '../auth/guards/rt.guard';
 import { AuthService } from 'src/auth/auth.service';
 import { resolvedToken } from '../auth/types/index';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 export class UsersController {
@@ -60,6 +64,31 @@ export class UsersController {
   async getInfo(@Request() { user }: { user: resolvedToken }) {
     const info = await this.usersService.getInfo(user.name);
     return info;
+  }
+
+  @UseGuards(AtGuard)
+  @Patch('updateInfo')
+  async updateInfo(
+    @Request() { user }: { user: resolvedToken },
+    @Body() userUpdateInput: Prisma.UserUpdateInput,
+  ) {
+    const result = await this.usersService.updateInfo(user.id, userUpdateInput);
+
+    return result;
+  }
+
+  @UseGuards(AtGuard)
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() { user }: { user: resolvedToken },
+  ) {
+    await this.usersService.upload(user.id, file);
+
+    return {
+      status: 'success upload',
+    };
   }
 
   @UseGuards(AtGuard)

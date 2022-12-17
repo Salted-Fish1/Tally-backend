@@ -3,6 +3,9 @@ import { Prisma } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma.service';
 import { resolvedToken } from '../auth/types/index';
+import * as fs from 'fs';
+import * as dayjs from 'dayjs';
+import * as path from 'path';
 
 @Injectable()
 export class UsersService {
@@ -75,5 +78,30 @@ export class UsersService {
     });
 
     return user;
+  }
+
+  async updateInfo(userId: number, userUpdateInput: Prisma.UserUpdateInput) {
+    const result = await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: userUpdateInput,
+    });
+
+    return result;
+  }
+
+  async upload(userId: number, file: Express.Multer.File) {
+    let filePath = path.join('upload', dayjs().format('YYYY-MM-DD'));
+
+    fs.mkdir(filePath, { recursive: true }, (err) => {
+      if (err) throw err;
+    });
+
+    filePath = path.join(filePath, file.originalname);
+
+    fs.writeFileSync(filePath, file.buffer);
+
+    this.updateInfo(userId, { avatar: filePath });
   }
 }
